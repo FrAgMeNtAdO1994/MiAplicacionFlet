@@ -2,7 +2,7 @@ import flet as ft
 from flet_core import ImageFit
 from datetime import datetime
 
-entrenadores = {'entrenador':'123'}
+entrenadores = {'entrenador':'123','entrenador2':'123'}
 clientes = {'mario':'123'}
 rutinas = {}
 m = 0
@@ -79,6 +79,7 @@ def main(page: ft.Page):
 
         elif usuario in clientes and clientes[usuario] == contraseña:
             logged_in =True
+            usuario_actual = usuario
             inicio()
         else:
             page.add(ft.Text("Credenciales incorrectas.", color="red"))
@@ -96,6 +97,7 @@ def main(page: ft.Page):
     # PESTAÑAS USUARIO
 
     def inicio():
+        global usuario_actual
         page.clean()  # Limpiar contenido anterior
         navegacion_usuario()
 
@@ -104,50 +106,96 @@ def main(page: ft.Page):
                            scroll=ft.ScrollMode.ALWAYS,
                            expand=True)
 
-        '''for n in range(1, 101):
-            column.controls.append(ft.Text(20 * '_' + str(n), size=20, color=ft.colors.BLACK))'''
 
         logout_button = ft.ElevatedButton("Cerrar Sesión", on_click=lambda e: logout())
+        mensaje_123=ft.Text(usuario_actual)
 
         column.controls.append(logout_button)
 
         page.add(column)
         page.update()
 
-    def rutina():
+    def rutina_asignada():
+        global usuario_actual
+        global rutinas
         page.clean()
         navegacion_usuario()
 
-        column = ft.Column(spacing=100,
-                           height=300,
-                           scroll=ft.ScrollMode.ALWAYS,
-                           expand=True)
+        mensaje_1 = ft.Text(f'{usuario_actual.upper()}, Tu Rutina es: ')
 
-        page.clean()  # Limpiar contenido anterior
-        page.add(ft.Text("Contenido de la pestaña Desplazamiento"))
 
-        logout_button = ft.ElevatedButton("Cerrar Sesión", on_click=lambda e: logout())
-        column.controls.append(logout_button)
+        def comprobacion_rutina():
+            if usuario_actual in rutinas:
+                page.clean()
+                seleccion_rutina = rutinas[usuario_actual]
+                mostrar_rutina = ft.Text(seleccion_rutina)
+                page.add(mensaje_1,mostrar_rutina,volver_button)
+                page.update()
 
-        page.update()
 
-    def comidas():
+
+            else:
+                page.clean()
+                no_rutina = ft.Text('Usuario no posee Rutina')
+                page.add(mensaje_1,no_rutina,volver_button)
+                page.update()
+
+        volver_button = ft.ElevatedButton('Volver', on_click=lambda _: rutina_asignada())
+        boton_verificar = ft.ElevatedButton('Verificar', on_click=lambda e: comprobacion_rutina())
+        page.add(mensaje_1,boton_verificar)
+
+    def comidas_asignadas():
+        global usuario_actual
+        global comidas_dic
         page.clean()
         navegacion_usuario()
+        mensaje_1 = ft.Text(f'{usuario_actual.upper()}, Tus comidas son:')
 
-        column = ft.Column(spacing=100,
-                           height=300,
-                           scroll=ft.ScrollMode.ALWAYS,
-                           expand=True)
+        def comprobar():
+            if usuario_actual in comidas_dic:
+                page.clean()
+                navegacion_usuario()
+                revision_comidas = ft.Text(comidas_dic[usuario_actual])
+                page.add(mensaje_1,revision_comidas,boton_volver)
+                page.update()
 
-        page.clean()  # Limpiar contenido anterior
-        page.add(ft.Text("Contenido de la pestaña Marcador"))
+            else:
+                page.clean()
+                mensaje_2 = ft.Text('Usuario no posee Comidas Asignadas')
+                page.add(mensaje_1,mensaje_2,boton_volver)
+                page.update()
 
-        logout_button = ft.ElevatedButton("Cerrar Sesión", on_click=lambda e: logout())
-        column.controls.append(logout_button)
+        boton_volver = ft.ElevatedButton('Volver', on_click= lambda _:comidas_asignadas())
+        boton_verificar = ft.ElevatedButton('Verificar', on_click=lambda e:comprobar())
+        page.add(mensaje_1,boton_verificar)
 
-        page.update()
 
+    def preguntas_respuestas():
+        page.clean()
+        navegacion_usuario()
+        page.title = "Menú Desplegable desde Diccionario"
+        global entrenadores
+        selected_option_text = ft.Text('Escoge una opcion')
+
+        mostrar_profesores = ft.Dropdown(
+            label="Selecciona un profesor",
+            options=[
+                ft.dropdown.Option(key) for key in entrenadores
+            ])
+
+        def seleccion_final():
+            page.clean()
+            navegacion_usuario()
+            clave_seleccionada = mostrar_profesores.value
+
+            if clave_seleccionada:
+                mensaje_7 = ft.Text(f'seleccionaste a: {clave_seleccionada}')
+                page.add(mensaje_7, boton_volver1)
+                page.update()
+
+        boton_seleccion = ft.ElevatedButton('Seleccionar', on_click=lambda e: seleccion_final())
+        boton_volver1 = ft.ElevatedButton('Volver', on_click=lambda _: preguntas_respuestas())
+        page.add(selected_option_text, mostrar_profesores, boton_seleccion)
 
     # SEPARADOR________________________________________________________________
 
@@ -392,8 +440,12 @@ def main(page: ft.Page):
         if e.control.selected_index == 0:
             inicio()
         elif e.control.selected_index == 1:
-            comidas()
+            rutina_asignada()
         elif e.control.selected_index == 2:
+            comidas_asignadas()
+        elif e.control.selected_index == 3:
+            preguntas_respuestas()
+        elif e.control.selected_index==4:
             pass
 
     # Configurar la barra de navegación usuario
@@ -406,8 +458,10 @@ def main(page: ft.Page):
                 active_color=ft.colors.WHITE,
                 destinations=[
                     ft.NavigationBarDestination(icon=ft.icons.EXPLORE, label="INICIO"),
-                    ft.NavigationBarDestination(icon=ft.icons.SPORTS_GYMNASTICS, label="RUTINA"),
-                    ft.NavigationBarDestination(icon=ft.icons.LOCAL_RESTAURANT, label="COMIDAS")
+                    ft.NavigationBarDestination(icon=ft.icons.SPORTS_GYMNASTICS, label="Rutina Asignada"),
+                    ft.NavigationBarDestination(icon=ft.icons.RESTAURANT, label="Comidas Asignadas"),
+                    ft.NavigationBarDestination(icon=ft.icons.RESTAURANT, label='Preguntas y Respuestas'),
+                    ft.NavigationBarDestination(icon=ft.icons.SPORTS, label='Rutina Asignada')
                 ],
                 on_change=on_tab_change
             )
@@ -438,6 +492,7 @@ def main(page: ft.Page):
         elif e.control.selected_index==4:
             agregar_comidad()
 
+
     def navegacion_entrenador():
 
         if logged_in:
@@ -451,6 +506,7 @@ def main(page: ft.Page):
                     ft.NavigationBarDestination(icon=ft.icons.LOCAL_RESTAURANT, label="Rutinas"),
                     ft.NavigationBarDestination(icon=ft.icons.TIMER, label='Horario'),
                     ft.NavigationBarDestination(icon=ft.icons.FOOD_BANK, label='+Comidas')
+
                 ],
                 on_change=barra_entrenador
             )
