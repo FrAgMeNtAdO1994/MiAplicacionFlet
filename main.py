@@ -10,6 +10,7 @@ ciclo_marcacion = 0
 lista_marcaciones = []
 usuario_actual =''
 comidas_dic ={}
+Preguntas_variable = {}
 
 # Funciones adicionales pueden ser importadas aquí
 # from funciones import *
@@ -171,6 +172,7 @@ def main(page: ft.Page):
 
 
     def preguntas_respuestas():
+        global Preguntas_variable
         page.clean()
         navegacion_usuario()
         page.title = "Menú Desplegable desde Diccionario"
@@ -190,12 +192,25 @@ def main(page: ft.Page):
 
             if clave_seleccionada:
                 mensaje_7 = ft.Text(f'seleccionaste a: {clave_seleccionada}')
-                page.add(mensaje_7, boton_volver1)
-                page.update()
+                etiqueta_5 = ft.Text('Ingresa la pregunta - Sera respondida en un maximo de 24Hrs')
+                recuadro_pregunta = ft.TextField(autofocus=True,multiline=True)
+                boton_enviar_pregunta = ft.ElevatedButton('Enviar', on_click=lambda _: guardado_pregunta())
+                page.add(mensaje_7,etiqueta_5,recuadro_pregunta,boton_enviar_pregunta,boton_volver1)
+
+            def guardado_pregunta():
+                page.clean()
+                if clave_seleccionada not in Preguntas_variable:
+                    Preguntas_variable[clave_seleccionada] = []
+                Preguntas_variable[clave_seleccionada].append(f'Usuario {usuario_actual.upper()} pregunta: {recuadro_pregunta.value.lower()}')
+                '''Preguntas_variable[clave_seleccionada].append(recuadro_pregunta.value.lower())'''
+                print(Preguntas_variable)
+                preguntas_respuestas()
+
 
         boton_seleccion = ft.ElevatedButton('Seleccionar', on_click=lambda e: seleccion_final())
         boton_volver1 = ft.ElevatedButton('Volver', on_click=lambda _: preguntas_respuestas())
         page.add(selected_option_text, mostrar_profesores, boton_seleccion)
+        page.update()
 
     # SEPARADOR________________________________________________________________
 
@@ -383,8 +398,8 @@ def main(page: ft.Page):
                     page.clean()
                     mensaje = ft.Text('El Usuario ya contiene las comidas')
 
-                    if n_c in comidas:
-                        mostrar = comidas[n_c]
+                    if n_c in comidas_dic:
+                        mostrar = comidas_dic[n_c]
                         columna_comida = ft.Column(controls=[ft.Text(mostrar)])
                         page.add(columna_comida,boton_volver)
                         page.update()
