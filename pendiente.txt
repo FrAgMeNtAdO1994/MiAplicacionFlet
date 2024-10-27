@@ -1,0 +1,20 @@
+Para que funcione el perfil: 
+
+* Necesitamos modificar la pestaña del entrenador de creación de usuarios, ya que primero necesito acceder a ciertos datos, por lo cual para no modificar todo 
+
+ -- perfil creación de usuario es necesario que una ves creado el perfil este abra una nueva ventana, o primeramente una ventana donde aparezca nombre, fecha de nacimiento y todos los datos que podemos necesitar del usuario. 
+
+
+-- posterior mente estos datos los mostraremos en el perfil del usuario, es necesario consumir ese diccionario para mostrar y ubicar, por primera ves trataremos de crear columnas con ubicaciones para que se modifique esto. 
+
+luego como paso penúltimo, agregaremos la imagen que la idea es que el usuario desde su pestaña pueda agregar mientras el no exija cambiar la imagen esta será una neutra. 
+
+finalmente le agregaremos esa imagen en diferentes columnas dentro de todas las pestañas incorporando el nombre 
+
+con esto deberíamos dar por terminado la pestaña perfil (se deveria poder modificar los datos posteriormente pero desde el usuario entrenador y no del mismo usuario ya que esto incluirá estatura peso y todo, por primera ves incorporaremos los objetos dentro de la aplicación tiempo de desarrollo máximo 48hrs. 
+
+
+* Recordar permitir eliminar rutinas desde la pestaña entrenador. 
+
+
+

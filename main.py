@@ -1,7 +1,9 @@
 import flet as ft
 from flet_core import ImageFit
 from datetime import datetime
+import time
 
+contador_respuestas = 1
 entrenadores = {'entrenador':'123','entrenador2':'123'}
 clientes = {'mario':'123'}
 rutinas = {}
@@ -11,6 +13,8 @@ lista_marcaciones = []
 usuario_actual =''
 comidas_dic ={}
 Preguntas_variable = {}
+respuestas_dic ={}
+
 
 # Funciones adicionales pueden ser importadas aquí
 # from funciones import *
@@ -24,39 +28,50 @@ def main(page: ft.Page):
     page.margin = 24
     page.bgcolor = ft.colors.BLACK  # volver transparente el fondo
     '''page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo'))'''  # asignar imagen de fondo
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    '''page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER'''
     txt_time = ft.Text(value="Hora actual: ", size=24)
+
 
 
 
     # Campos para el formulario y etiquetas
 
      #inicio sesion
-    username_label = ft.Text("Nombre de Usuario",
-                             weight=ft.FontWeight.BOLD,
-                             size=20,
-                             color=ft.colors.WHITE70)  # etiquetas
 
-    password_label = ft.Text("Contraseña",
+    username_label = ft.Container(content=ft.Text("Nombre de Usuario",
                              weight=ft.FontWeight.BOLD,
                              size=20,
-                             font_family='consolas',
-                             color=ft.colors.WHITE70)  # etiquetas
+                             color=ft.colors.WHITE70,
+                             font_family='consolas'),
+                                  border=ft.border.all(2,ft.colors.WHITE70),
+                                  bgcolor=ft.colors.BROWN_900,
+                                  border_radius=30,
+                                  padding=5,
+                                  margin=10)
+
+    password_label = ft.Container(content=ft.Text("Contraseña",
+                             weight=ft.FontWeight.BOLD,
+                             size=20,
+                             color=ft.colors.WHITE70,
+                             font_family='consolas'),
+                                  border=ft.border.all(2,ft.colors.WHITE70),
+                                  bgcolor=ft.colors.BROWN_900,
+                                  border_radius=30,
+                                  padding=5,
+                                  margin=10)
 
     # Crear campos de texto e tiquetas
     username_field = ft.TextField(
         autofocus=True,
-        hint_text="Ingresa tu nombre de usuario",
+        hint_text="Ingresa tu nombre de usuario")
+    contenedor_username = ft.Container(content=username_field,border_radius=6, border=ft.border.all(2,ft.colors.GREY_600))
 
-    )
 
     password_field = ft.TextField(
         password=True,
-        hint_text="Ingresa tu contraseña"
-
-    )
-
+        hint_text="Ingresa tu contraseña")
+    contenedor_password = ft.Container(content=password_field,border_radius=6, border=ft.border.all(2,ft.colors.GREY_600))
 
 
     #SEPARADOR_________________________________________________________________
@@ -64,34 +79,7 @@ def main(page: ft.Page):
     #inicio se sesion
 
     # Variable para almacenar si el usuario ha iniciado sesión
-    logged_in = False
 
-    # Función de inicio de sesión
-    def login(e):
-        global usuario_actual
-        nonlocal logged_in  # Usar la variable externa
-        usuario = username_field.value.lower()
-        contraseña = password_field.value.lower()
-
-        if usuario in entrenadores and entrenadores[usuario] == contraseña:
-            logged_in = True
-            lista_alumnos()  # Mostrar contenido de la pestaña "Explorar" al iniciar sesión
-            usuario_actual = usuario
-
-        elif usuario in clientes and clientes[usuario] == contraseña:
-            logged_in =True
-            usuario_actual = usuario
-            inicio()
-        else:
-            page.add(ft.Text("Credenciales incorrectas.", color="red"))
-            page.update()
-
-    # Botón para iniciar sesión
-    login_button = ft.ElevatedButton("Iniciar Sesión", on_click=login, bgcolor=ft.colors.RED_400)
-
-
-    # Agregar los elementos a la página
-    page.add(username_label,username_field,password_label, password_field, login_button)
 
     # SEPARADOR____________________________________________________________
 
@@ -108,7 +96,7 @@ def main(page: ft.Page):
                            expand=True)
 
 
-        logout_button = ft.ElevatedButton("Cerrar Sesión", on_click=lambda e: logout())
+
         mensaje_123=ft.Text(usuario_actual)
 
         column.controls.append(logout_button)
@@ -122,56 +110,106 @@ def main(page: ft.Page):
         page.clean()
         navegacion_usuario()
 
-        mensaje_1 = ft.Text(f'{usuario_actual.upper()}, Tu Rutina es: ')
+        mensaje_1 = ft.Text(f'{usuario_actual.upper()}, Tu Rutina es: ',size=20,font_family='consolas', color=ft.colors.WHITE70,weight=ft.FontWeight.BOLD)
+
+        row5 = ft.Row(controls=[mensaje_1],alignment=ft.MainAxisAlignment.CENTER)
+        column5 = ft.Column(controls=[row5])
+
+        row_espacios_rutinas = ft.Row(controls=[ft.Container(width=0, height=40)])
+        column_espacio_rutinas = ft.Column(controls=[row_espacios_rutinas])
+
+
 
 
         def comprobacion_rutina():
             if usuario_actual in rutinas:
                 page.clean()
                 seleccion_rutina = rutinas[usuario_actual]
-                mostrar_rutina = ft.Text(seleccion_rutina)
-                page.add(mensaje_1,mostrar_rutina,volver_button)
+
+                mostrar_rutina = ft.Container(content=ft.Text(seleccion_rutina),
+                                              border=ft.border.all(2,ft.colors.RED),
+                                              width=450, height=500
+                                              )
+                row6 = ft.Row(controls=[mostrar_rutina],alignment=ft.MainAxisAlignment.CENTER)
+                column6 = ft.Column(controls=[row6])
+
+                page.add(column6,column_boton_volver)
                 page.update()
-
-
 
             else:
                 page.clean()
-                no_rutina = ft.Text('Usuario no posee Rutina')
-                page.add(mensaje_1,no_rutina,volver_button)
+                no_rutina = ft.Container(content=ft.Text('Usuario no posee Rutina',weight=ft.FontWeight.BOLD),
+                                         border=ft.border.all(2,ft.colors.RED),
+                                         width=450,height=500
+                                         )
+                row7 = ft.Row(controls=[no_rutina],alignment=ft.MainAxisAlignment.CENTER)
+                column7= ft.Column(controls=[row7])
+
+                page.add(column_CierreSesion,column_espacio_rutinas,column5,column7,column_boton_volver)
                 page.update()
 
         volver_button = ft.ElevatedButton('Volver', on_click=lambda _: rutina_asignada())
+        row_boton_volver = ft.Row(controls=[volver_button], alignment=ft.MainAxisAlignment.CENTER)
+        column_boton_volver = ft.Column(controls=[row_boton_volver])
+
         boton_verificar = ft.ElevatedButton('Verificar', on_click=lambda e: comprobacion_rutina())
-        page.add(mensaje_1,boton_verificar)
+        row_boton_verificar = ft.Row(controls=[boton_verificar],alignment=ft.MainAxisAlignment.CENTER)
+        column_boton_verificar = ft.Column(controls=[row_boton_verificar])
+
+        page.add(column_CierreSesion,column_espacio_rutinas,column5,column_boton_verificar)
 
     def comidas_asignadas():
         global usuario_actual
         global comidas_dic
         page.clean()
         navegacion_usuario()
-        mensaje_1 = ft.Text(f'{usuario_actual.upper()}, Tus comidas son:')
+
+        mensaje_1 = ft.Text(f'{usuario_actual.upper()}, Tus comidas son:', size=20,font_family='consolas', weight=ft.FontWeight.BOLD, color=ft.colors.WHITE70)
+        row8 = ft.Row(controls=[mensaje_1], alignment=ft.MainAxisAlignment.CENTER)
+        column8 = ft.Column(controls=[row8])
 
         def comprobar():
             if usuario_actual in comidas_dic:
                 page.clean()
                 navegacion_usuario()
-                revision_comidas = ft.Text(comidas_dic[usuario_actual])
-                page.add(mensaje_1,revision_comidas,boton_volver)
+
+                revision_comidas = ft.Container(content=ft.Text(comidas_dic[usuario_actual],weight=ft.FontWeight.BOLD),
+                                                border=ft.border.all(2,ft.colors.RED),
+                                                width=450,height=500)
+                row9 = ft.Row(controls=[revision_comidas],alignment=ft.MainAxisAlignment.CENTER)
+                column9 = ft.Column(controls=[row9])
+
+
+                page.add(column_CierreSesion,column_espacio_comidas,column8,column9,column_BotonVolver_comidas)
                 page.update()
 
             else:
                 page.clean()
-                mensaje_2 = ft.Text('Usuario no posee Comidas Asignadas')
-                page.add(mensaje_1,mensaje_2,boton_volver)
+
+                mensaje_2 = ft.Container(content=ft.Text('Usuario no posee Comidas Asignadas',weight=ft.FontWeight.BOLD),
+                                         border=ft.border.all(2,ft.colors.RED),
+                                         width=450,height=500)
+                row10 = ft.Row(controls=[mensaje_2],alignment=ft.MainAxisAlignment.CENTER)
+                column10 = ft.Column(controls=[row10])
+
+                page.add(column_espacio_comidas,column8,column10,column_BotonVolver_comidas)
                 page.update()
 
         boton_volver = ft.ElevatedButton('Volver', on_click= lambda _:comidas_asignadas())
-        boton_verificar = ft.ElevatedButton('Verificar', on_click=lambda e:comprobar())
-        page.add(mensaje_1,boton_verificar)
+        row_BotonVolver_comidas = ft.Row(controls=[boton_volver], alignment=ft.MainAxisAlignment.CENTER)
+        column_BotonVolver_comidas = ft.Column(controls=[row_BotonVolver_comidas])
 
+        boton_verificar = ft.ElevatedButton('Verificar', on_click=lambda e:comprobar())
+        row_boton_VerificacionComida = ft.Row(controls=[boton_verificar], alignment=ft.MainAxisAlignment.CENTER)
+        column_boton_VerificacionComida = ft.Column(controls=[row_boton_VerificacionComida])
+
+        row_espacio_comidas = ft.Row(controls=[ft.Container(width=0,height=45)])
+        column_espacio_comidas = ft.Column(controls=[row_espacio_comidas])
+
+        page.add(column_CierreSesion,column_espacio_comidas,column8,column_boton_VerificacionComida)
 
     def preguntas_respuestas():
+        global respuestas_dic
         global Preguntas_variable
         page.clean()
         navegacion_usuario()
@@ -206,11 +244,54 @@ def main(page: ft.Page):
                 print(Preguntas_variable)
                 preguntas_respuestas()
 
+        def administrador_respuestas():
+            global contador_respuestas
+            page.clean()
+            if not respuestas_dic.get(usuario_actual):
+                mensaje_de_comparacion = ft.Text('No tienes respuestas')
+                page.add(mensaje_de_comparacion,boton_volver1)
+                contador_respuestas = 1
 
+            else:
+                for r in respuestas_dic:
+                    if r == usuario_actual:
+                        respuestass = respuestas_dic[r]
+                        print(respuestass)
+                        for rr in respuestass:
+                            contador = ft.Text(f'Respuesta Numero {contador_respuestas}',size=20, color=ft.colors.WHITE70)
+                            respuesta_enventana = ft.Text(f'{usuario_actual.upper()}, La respuesta a tu pregunta es: \n{rr}')
+                            boton_MarcadoLeido = ft.ElevatedButton('Marcar como Leido', on_click=lambda _:marcar_leido(rr))
+                            page.add(contador,respuesta_enventana,boton_MarcadoLeido,boton_volver1)
+
+                            time.sleep(1000000)
+
+        def marcar_leido(elemento):
+            global contador_respuestas
+            page.clean()
+            if usuario_actual in respuestas_dic:
+                if elemento in respuestas_dic[usuario_actual]:
+                    respuestas_dic[usuario_actual].remove(elemento)
+                    contador_respuestas += 1
+                    print(respuestas_dic)
+                    administrador_respuestas()
+                    page.update()
+
+
+
+        boton_preguntas_respondidas = ft.ElevatedButton('RESPUESTAS', on_click=lambda _:administrador_respuestas())
         boton_seleccion = ft.ElevatedButton('Seleccionar', on_click=lambda e: seleccion_final())
         boton_volver1 = ft.ElevatedButton('Volver', on_click=lambda _: preguntas_respuestas())
-        page.add(selected_option_text, mostrar_profesores, boton_seleccion)
+        page.add(selected_option_text, mostrar_profesores, boton_seleccion,boton_preguntas_respondidas)
         page.update()
+
+    def perfil():
+        page.clean()
+        navegacion_usuario()
+        etiqueta_perfil1= ft.Text(usuario_actual,size=15,color=ft.colors.WHITE70)
+
+
+
+
 
     # SEPARADOR________________________________________________________________
 
@@ -424,6 +505,63 @@ def main(page: ft.Page):
         boton_search = ft.ElevatedButton('Buscar', on_click=lambda _: agregar())
         page.add(ingresar_nombre_cliente, boton_search)
 
+    def preguntas_respuestas_entrenador():
+        borrar = ''
+        global usuario_actual
+        global Preguntas_variable
+        page.clean()
+        navegacion_entrenador()
+        etiqueta_preguntas = ft.Text('Responder Preguntas', size=20, font_family='consolas', color=ft.colors.WHITE70)
+
+        def verificacion_preguntas():
+            page.clean()
+            if not Preguntas_variable.get(usuario_actual): #asi es como se compara si es que no tiene nada el dic
+                mensaje_sin_preguntas = ft.Text('No tienes preguntas por responder')
+                page.add(mensaje_sin_preguntas,boton_volver_2)
+
+            else:
+                for n in Preguntas_variable:
+                    if n == usuario_actual:
+                        preguntasss = Preguntas_variable[n]
+                        print(preguntasss)
+                        for i in preguntasss:
+                            preguntas_enventana = ft.Text(i)
+                            etiqueta_responder_nombre_usuario = ft.Text('Ingrese el nombre del Usuario')
+                            respuesta_nombre_usuario = ft.TextField(autofocus=True)
+                            etiqueta_responder_pregunta = ft.Text('Responda la pregunta')
+                            respuesta_recuadro = ft.TextField(autofocus=True, multiline=True)
+                            boton_responder = ft.ElevatedButton('Responder', on_click=lambda _: borrado_pregunta(i,respuesta_nombre_usuario.value.lower(),respuesta_recuadro.value.lower()))
+                            page.add(preguntas_enventana,
+                                     etiqueta_responder_nombre_usuario,
+                                     respuesta_nombre_usuario,
+                                     etiqueta_responder_pregunta,
+                                     respuesta_recuadro,
+                                     boton_responder)
+                            page.update()
+
+                            time.sleep(100000)
+
+
+        def borrado_pregunta(elemento,user,responder):
+            page.clean()
+            if user not in respuestas_dic:
+                respuestas_dic[user]=[responder]
+            else:
+                respuestas_dic[user].append(responder)
+
+            if usuario_actual in Preguntas_variable:
+                if elemento in Preguntas_variable[usuario_actual]:
+                    Preguntas_variable[usuario_actual].remove(elemento)
+            print(Preguntas_variable)
+            print(respuestas_dic)
+            preguntas_respuestas_entrenador()
+
+        boton_volver_2 = ft.ElevatedButton('Volver', on_click=lambda _:preguntas_respuestas_entrenador())
+        boton_verificar_preguntas = ft.ElevatedButton('Verificar preguntas', on_click=lambda _:verificacion_preguntas())
+        page.add(etiqueta_preguntas,boton_verificar_preguntas)
+        page.update()
+
+    #SEPARADOR______________________________________________
 
     #CERRAR SESION
 
@@ -435,16 +573,39 @@ def main(page: ft.Page):
 
         # Regresar a la pantalla de inicio de sesión
         page.clean()
-        page.add(username_field, password_field, login_button)
+        page.add(username_label,username_field,password_label,password_field,login_button)
         navegacion_usuario()
         navegacion_entrenador()
 
         page.update()
 
+    #INICIO SESION
+
+    logged_in = False
+
+    def login():
+        global usuario_actual
+        nonlocal logged_in  # Usar la variable externa
+        usuario = username_field.value.lower()
+        contraseña = password_field.value.lower()
+
+        if usuario in entrenadores and entrenadores[usuario] == contraseña:
+            logged_in = True
+            lista_alumnos()  # Mostrar contenido de la pestaña "Explorar" al iniciar sesión
+            usuario_actual = usuario
+
+        elif usuario in clientes and clientes[usuario] == contraseña:
+            logged_in = True
+            usuario_actual = usuario
+            inicio()
+        else:
+            page.add(ft.Text("Credenciales incorrectas.", color="red"))
+            page.update()
 
     #SEPARADOR_______________________________
 
-    # Definir la función para manejar el cambio de pestañas usuario
+    #Barra navegacion USUARIO
+
     def on_tab_change(e):
         if not logged_in:
             return  # No hacer nada si no está autenticado
@@ -461,9 +622,9 @@ def main(page: ft.Page):
         elif e.control.selected_index == 3:
             preguntas_respuestas()
         elif e.control.selected_index==4:
-            pass
+            perfil()
 
-    # Configurar la barra de navegación usuario
+
     def navegacion_usuario():
 
         if logged_in:
@@ -475,8 +636,9 @@ def main(page: ft.Page):
                     ft.NavigationBarDestination(icon=ft.icons.EXPLORE, label="INICIO"),
                     ft.NavigationBarDestination(icon=ft.icons.SPORTS_GYMNASTICS, label="Rutina Asignada"),
                     ft.NavigationBarDestination(icon=ft.icons.RESTAURANT, label="Comidas Asignadas"),
-                    ft.NavigationBarDestination(icon=ft.icons.RESTAURANT, label='Preguntas y Respuestas'),
-                    ft.NavigationBarDestination(icon=ft.icons.SPORTS, label='Rutina Asignada')
+                    ft.NavigationBarDestination(icon=ft.icons.QUESTION_ANSWER_ROUNDED, label='Preguntas y Respuestas'),
+                    ft.NavigationBarDestination(icon=ft.icons.PERSON, label='Perfil')
+
                 ],
                 on_change=on_tab_change
             )
@@ -506,6 +668,8 @@ def main(page: ft.Page):
             marcacion()
         elif e.control.selected_index==4:
             agregar_comidad()
+        elif e.control.selected_index ==5:
+            preguntas_respuestas_entrenador()
 
 
     def navegacion_entrenador():
@@ -520,7 +684,9 @@ def main(page: ft.Page):
                     ft.NavigationBarDestination(icon=ft.icons.ADD_PHOTO_ALTERNATE, label="+Usuarios"),
                     ft.NavigationBarDestination(icon=ft.icons.LOCAL_RESTAURANT, label="Rutinas"),
                     ft.NavigationBarDestination(icon=ft.icons.TIMER, label='Horario'),
-                    ft.NavigationBarDestination(icon=ft.icons.FOOD_BANK, label='+Comidas')
+                    ft.NavigationBarDestination(icon=ft.icons.FOOD_BANK, label='+Comidas'),
+                    ft.NavigationBarDestination(icon=ft.icons.QUESTION_MARK, label='Preguntas y respuestas')
+
 
                 ],
                 on_change=barra_entrenador
@@ -529,5 +695,39 @@ def main(page: ft.Page):
         else:
             page.navigation_bar = None
 
+
+
+    #boton cerrar sesion para todas las funciones
+    logout_button = ft.ElevatedButton("Cerrar Sesión", on_click=lambda _: logout())
+
+    # Botón para iniciar sesión
+    login_button = ft.ElevatedButton("Iniciar Sesión", on_click=lambda _:login(), bgcolor=ft.colors.RED_400)
+
+    row_boton_InicioSesion = ft.Row(controls=[login_button], alignment=ft.MainAxisAlignment.CENTER)
+    column_InicioSesion = ft.Column(controls=[row_boton_InicioSesion])
+
+    row_boton_CierreSesion = ft.Row(controls=[logout_button],alignment=ft.MainAxisAlignment.END)
+    column_CierreSesion = ft.Column(controls=[row_boton_CierreSesion])
+
+    # Agregar los elementos a la página
+    row_espacios = ft.Row(controls=[ft.Container(width=0,height=200)])
+    column_espacio = ft.Column(controls=[row_espacios])
+
+    row = ft.Row(controls=[username_label,ft.Container(width=0, height=0)],alignment=ft.MainAxisAlignment.CENTER)
+    column1 = ft.Column(controls=[row])
+
+    row1 = ft.Row(controls=[contenedor_username],alignment=ft.MainAxisAlignment.CENTER)
+    column2 = ft.Column(controls=[row1])
+
+    row2 = ft.Row(controls=[password_label],alignment=ft.MainAxisAlignment.CENTER)
+    column3 = ft.Column(controls=[row2])
+
+    row3 = ft.Row(controls=[contenedor_password],alignment=ft.MainAxisAlignment.CENTER)
+    column4 = ft.Column(controls=[row3])
+
+
+
+
+    page.add(column_espacio,column1,column2,column3,column4,column_InicioSesion)
 # Ejecutar la aplicación
 ft.app(main)

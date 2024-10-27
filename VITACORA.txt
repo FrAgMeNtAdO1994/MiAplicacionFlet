@@ -1,0 +1,4 @@
+* se agrego la funcion respuestas y preguntas 26/10/2024
+
+* Por tema de tiempo, se comienza a mejorar lo vizual rapidamente con las funciones ya establecidas, en un futuro se espera
+agregar y mejorar mas funcionalidades
