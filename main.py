@@ -3,6 +3,14 @@ from flet_core import ImageFit
 from datetime import datetime
 import time
 
+imagenes_fondo ={
+    0:'C:\\Users\\Mario\\Desktop\\Aplicacion Gym\\fondo1',
+    1:'C:\\Users\\Mario\\Desktop\\Aplicacion Gym\\fondo2',
+    2:'C:\\Users\\Mario\\Desktop\\Aplicacion Gym\\fondo3',
+    3:'C:\\Users\\Mario\\Desktop\\Aplicacion Gym\\fondo4',
+    4:'C:\\Users\\Mario\\Desktop\\Aplicacion Gym\\fondo5'
+}
+
 contador_respuestas = 1
 entrenadores = {'entrenador':'123','entrenador2':'123'}
 clientes = {'mario':'123'}
@@ -32,6 +40,17 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER'''
     txt_time = ft.Text(value="Hora actual: ", size=24)
 
+    '''def cambio_fondo():
+        if not logged_in:
+            return
+        print('imagen seleccionada:', e.control.selected_index)
+
+        select_index = e.control.selected_index
+        if select_index in imagenes_fondo:
+            page.decoration = ft.BoxDecoration(
+                image=ft.DecorationImage(url=imagenes_fondo[select_index],
+                                         fit=ft.ImageFit.COVER)
+            )'''
 
 
 
@@ -88,6 +107,7 @@ def main(page: ft.Page):
     def inicio():
         global usuario_actual
         page.clean()  # Limpiar contenido anterior
+
         navegacion_usuario()
 
         column = ft.Column(spacing=100,
@@ -288,8 +308,6 @@ def main(page: ft.Page):
         page.clean()
         navegacion_usuario()
         etiqueta_perfil1= ft.Text(usuario_actual,size=15,color=ft.colors.WHITE70)
-
-
 
 
 
@@ -614,15 +632,27 @@ def main(page: ft.Page):
 
         # Llamar a la función correspondiente según la pestaña seleccionada
         if e.control.selected_index == 0:
+            page.bgcolor = ft.colors.TRANSPARENT
+            page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo1.jpg'))
+
             inicio()
         elif e.control.selected_index == 1:
+            page.bgcolor = ft.colors.TRANSPARENT
+            page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo2.jpg'))
             rutina_asignada()
+
         elif e.control.selected_index == 2:
+            page.bgcolor = ft.colors.TRANSPARENT
+            page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo5.jpg'))
             comidas_asignadas()
+
         elif e.control.selected_index == 3:
+            page.bgcolor = ft.colors.TRANSPARENT
+            page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo4.jpg'))
             preguntas_respuestas()
         elif e.control.selected_index==4:
-            perfil()
+            page.bgcolor = ft.colors.TRANSPARENT
+            page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo5.jpg'))
 
 
     def navegacion_usuario():
@@ -724,6 +754,7 @@ def main(page: ft.Page):
 
     row3 = ft.Row(controls=[contenedor_password],alignment=ft.MainAxisAlignment.CENTER)
     column4 = ft.Column(controls=[row3])
+
 
 
 
