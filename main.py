@@ -2,14 +2,8 @@ import flet as ft
 from flet_core import ImageFit
 from datetime import datetime
 import time
+import mysql.connector
 
-imagenes_fondo ={
-    0:'C:\\Users\\Mario\\Desktop\\Aplicacion Gym\\fondo1',
-    1:'C:\\Users\\Mario\\Desktop\\Aplicacion Gym\\fondo2',
-    2:'C:\\Users\\Mario\\Desktop\\Aplicacion Gym\\fondo3',
-    3:'C:\\Users\\Mario\\Desktop\\Aplicacion Gym\\fondo4',
-    4:'C:\\Users\\Mario\\Desktop\\Aplicacion Gym\\fondo5'
-}
 
 contador_respuestas = 1
 entrenadores = {'entrenador':'123','entrenador2':'123'}
@@ -40,17 +34,16 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER'''
     txt_time = ft.Text(value="Hora actual: ", size=24)
 
-    '''def cambio_fondo():
-        if not logged_in:
-            return
-        print('imagen seleccionada:', e.control.selected_index)
+    # conexion base de datos local
+    db = mysql.connector.connect(
+        user='root',
+        password='***',
+        host='localhost',
+        port='3306',
+        database='nueva_prueba'
 
-        select_index = e.control.selected_index
-        if select_index in imagenes_fondo:
-            page.decoration = ft.BoxDecoration(
-                image=ft.DecorationImage(url=imagenes_fondo[select_index],
-                                         fit=ft.ImageFit.COVER)
-            )'''
+    )
+    print(db)
 
 
 
@@ -107,7 +100,8 @@ def main(page: ft.Page):
     def inicio():
         global usuario_actual
         page.clean()  # Limpiar contenido anterior
-
+        page.bgcolor = ft.colors.TRANSPARENT
+        page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo1.jpg'))
         navegacion_usuario()
 
         column = ft.Column(spacing=100,
@@ -320,48 +314,99 @@ def main(page: ft.Page):
         navegacion_entrenador()
         nonlocal logged_in
 
+        # creacion de la etiqueta color y diseño y asignacion en columna
 
-        column = ft.Column(spacing=10)
+        container_label_ingreso = ft.Container(content=ft.Text('Ingreso de nuevos usuarios',
+                                                               weight=ft.FontWeight.BOLD,
+                                                               size=20,
+                                                               font_family='consolas',
+                                                               color=ft.colors.WHITE70),
+                                               border=ft.border.all(2, color=ft.colors.WHITE70),
+                                               bgcolor=ft.colors.BROWN_900,
+                                               border_radius=30,
+                                               padding=5,
+                                               margin=10,
+                                               )
+        row_container_label = ft.Row(controls=[container_label_ingreso], alignment=ft.MainAxisAlignment.CENTER)
+        colum_container_label = ft.Column(controls=[row_container_label])
 
-        column.controls.append(ft.Text("Registro de Nuevos Usuarios"))
+        # columna espaciado
 
-        new_username_field = ft.TextField(label="Nuevo Nombre de Usuario")
-        new_password_field = ft.TextField(label="Nueva Contraseña", password=True)
+        row_espacio_N_User = ft.Row(controls=[ft.Container(width=0, height=50)])
+        colum_espacio_N_User = ft.Column(controls=[row_espacio_N_User])
+
+        row_espacio_pequeño = ft.Row(controls=[ft.Container(width=0, height=30)])
+        colum_espacio_pequeño = ft.Column(controls=[row_espacio_pequeño])
+
+        # ingreso de los datos y creacion de columnas y contenedores
+
+        nuevo_usuario = ft.TextField(label="Nuevo Nombre de Usuario")
+        nuevo_usuario_container = ft.Container(content=nuevo_usuario, border_radius=6,
+                                               border=ft.border.all(2, color=ft.colors.WHITE70))
+        column21 = ft.Column(controls=[nuevo_usuario_container])
+
+        nueva_contraseña = ft.TextField(label="Nueva Contraseña", password=True)
+        nueva_contraseña_container = ft.Container(content=nueva_contraseña, border_radius=6,
+                                                  border=ft.border.all(2, ft.colors.WHITE70))
+        column22 = ft.Column(controls=[nueva_contraseña_container])
 
         def register_user(e):
-            nuevo_usuario = new_username_field.value
-            nueva_contraseña = new_password_field.value
+            cursor = db.cursor()
+            verificacion = 0
+            usuario = nuevo_usuario.value
+            contraseña = nueva_contraseña.value
+            query = 'select nombre from usuarios'
+            cursor.execute(query)
+            resultado = cursor.fetchall()
 
-            if nuevo_usuario == '' and nueva_contraseña == '':
-                column.controls.append(ft.Text("Por favor, completa ambos campos.", color="red"))
-                page.update()  # Actualiza la página para mostrar el mensaje
-                return  # Salir de la función si los campos están vacíos
+            if usuario == '' and contraseña == '':
+                print('no completo los campos')
+                page.add(ft.Text('Complete los campos Obligatorios'))
+                page.update()
+                return
 
-            if nuevo_usuario in clientes:
-                column.controls.append(ft.Text("El usuario ya existe.", color="white"))
+            elif usuario != '' and contraseña != '':
 
-            else:
-                clientes[nuevo_usuario] = nueva_contraseña
-                column.controls.append(ft.Text("Usuario registrado exitosamente.", color="white"))
+                for user in resultado:
+                    if usuario == user[0]:
+                        print('Usuario ya existe')
+                        mensaje_error = 'Usuario ya existe'
+                        page.add(ft.Text(mensaje_error, color="white"))
+                        nuevo_usuario.value = ''
+                        nueva_contraseña.value = ''
+                        page.update()
+                        return
 
-            new_username_field.value = ""
-            new_password_field.value = ""
-            page.update()
+
+                    else:
+                        verificacion = 1
+
+                if verificacion == 1:
+                    query = 'insert into usuarios(nombre,contraseña) VALUE(%s,%s)'
+                    cursor.execute(query, (usuario, contraseña))
+                    db.commit()
+                    nuevo_usuario.value = ''
+                    nueva_contraseña.value = ''
+                    mensaje_ingreso = 'Usuario ingresado'
+                    page.add(ft.Text(mensaje_ingreso, color="white"))
+                    print('Usuario ingresado')
+
+
 
         register_button = ft.ElevatedButton("Registrar Usuario", on_click=register_user)
 
-        column.controls.extend([new_username_field, new_password_field, register_button])
+        # agregar elementos a la pagina
+        # boton de cierre de sesion corresponde al del menu en general por lo cual es el mismo para todas las funciones
 
-        # Botón para cerrar sesión
-        logout_button = ft.ElevatedButton("Cerrar Sesión", on_click=lambda e: logout())
-
-        column.controls.append(logout_button)
-
-        page.add(column)
+        page.add(column_CierreSesion, colum_espacio_N_User, colum_container_label, colum_espacio_pequeño, column21,
+                 column22,
+                 register_button)
         page.update()
 
     def lista_alumnos():
         page.clean()
+        page.bgcolor = ft.colors.TRANSPARENT
+        page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo1.jpg'))
         navegacion_entrenador()
         lista =[]
         for i in clientes:
@@ -591,7 +636,7 @@ def main(page: ft.Page):
 
         # Regresar a la pantalla de inicio de sesión
         page.clean()
-        page.add(username_label,username_field,password_label,password_field,login_button)
+        page.add(column_espacio,column1,column2,column3,column4,column_InicioSesion)
         navegacion_usuario()
         navegacion_entrenador()
 
@@ -607,18 +652,64 @@ def main(page: ft.Page):
         usuario = username_field.value.lower()
         contraseña = password_field.value.lower()
 
-        if usuario in entrenadores and entrenadores[usuario] == contraseña:
-            logged_in = True
-            lista_alumnos()  # Mostrar contenido de la pestaña "Explorar" al iniciar sesión
-            usuario_actual = usuario
+        def inicio_usuario_base():
+            control = 0
+            cursor = db.cursor()
+            global usuario_actual
+            nonlocal logged_in
+            query = 'SELECT nombre,contraseña from usuarios'
+            cursor.execute(query)
+            resultado = cursor.fetchall()
 
-        elif usuario in clientes and clientes[usuario] == contraseña:
-            logged_in = True
-            usuario_actual = usuario
-            inicio()
-        else:
+            for user, contra in resultado:
+                control += 0
+                if user == usuario and contra == contraseña:
+
+                    logged_in = True
+                    usuario_actual = user
+                    print('inicio sesion correcto como usuario')
+                    inicio()
+                    return
+
+
+
+                else:
+                    print('revisando usuarios\n')
+                    control += 1
+
+            if control > 0:
+                print(control)
+                time.sleep(10)
+                inicio_entrenador_base()
+
+        def inicio_entrenador_base():
+            cursor = db.cursor()
+            nonlocal logged_in
+            global usuario_actual
+            query = 'SELECT nombre,contraseña from entrenador'
+            cursor.execute(query)
+            resultado = cursor.fetchall()
+
+            for user, contra in resultado:
+
+                if user == usuario and contra == contraseña:
+                    logged_in = True
+                    usuario_actual = user
+                    print('ingreso como entrenador')
+                    lista_alumnos()  # Mostrar contenido de la pestaña "Explorar" al iniciar sesión
+                    return
+
+
+                else:
+                    print('revisando usuarios de entrenadores\n')
+
+            print('No Match')
+            username_field.value = ''
+            password_field.value = ''
             page.add(ft.Text("Credenciales incorrectas.", color="red"))
             page.update()
+
+        inicio_usuario_base()
 
     #SEPARADOR_______________________________
 
@@ -689,17 +780,41 @@ def main(page: ft.Page):
 
         # Llamar a la función correspondiente según la pestaña seleccionada
         if e.control.selected_index == 0:
+
+            page.bgcolor = ft.colors.TRANSPARENT
+            page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo1.jpg'))
             lista_alumnos()
+
         elif e.control.selected_index == 1:
+
+            page.bgcolor = ft.colors.TRANSPARENT
+            page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo2.jpg'))
             ingreso_alumnos()
+
         elif e.control.selected_index == 2:
+
+            page.bgcolor = ft.colors.TRANSPARENT
+            page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo5.jpg'))
             agregar_rutinas()
+
         elif e.control.selected_index ==3:
+
+            page.bgcolor = ft.colors.TRANSPARENT
+            page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo4.jpg'))
             marcacion()
+
         elif e.control.selected_index==4:
+
+            page.bgcolor = ft.colors.TRANSPARENT
+            page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo5.jpg'))
             agregar_comidad()
+
         elif e.control.selected_index ==5:
+
+            page.bgcolor = ft.colors.TRANSPARENT
+            page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo6.jpg'))
             preguntas_respuestas_entrenador()
+
 
 
     def navegacion_entrenador():
