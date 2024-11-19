@@ -36,11 +36,11 @@ def main(page: ft.Page):
 
     # conexion base de datos local
     db = mysql.connector.connect(
-        user='root',
+        user='**',
         password='***',
-        host='localhost',
-        port='3306',
-        database='nueva_prueba'
+        host='****',
+        port='**',
+        database='**'
 
     )
     print(db)
@@ -474,7 +474,104 @@ def main(page: ft.Page):
         page.update()
 
     def marcacion():
-        global ciclo_marcacion
+        global usuario_actual
+        cursor = db.cursor()
+        page.clean()
+        navegacion_entrenador()
+        print(usuario_actual)
+
+        def comprobacion():
+            page.clean()
+            navegacion_entrenador()
+            page.update()
+            query = 'select nombre from estado_marcacion'
+            cursor.execute(query)
+            resultados = cursor.fetchall()
+            print(resultados)
+
+
+            #estado
+            for user in resultados:
+                print('entro al for')
+                if usuario_actual==user[0]:
+                    query = 'select estado from estado_marcacion where nombre = %s'
+                    cursor.execute(query,(usuario_actual,))
+                    resultado = cursor.fetchall()
+                    print(f'el estado del usuario {usuario_actual}, es {resultado}')
+                    print('encontro el estado')
+                    analisis(resultado) #PASA A LA FUNCION DE ANALISIS COMO YA ENCONTRO lo necesario
+                    break  #fin del for ya que encontro al usuario
+
+
+
+                else:
+                      print('buscando estado del usuario ') #vuelve al for para que siga buscando al usuario
+
+        def analisis(resultado):
+            print('resien entra a todo lo que contiene la pestaña marcacion ya que lo anterior solo es interno')
+            for estado in resultado:
+                if estado[0] == 0:
+                   page.clean()
+                   print('marcando entrada')
+                   page.add(column32,column30) #agrega los botones para marcar entrada,boton configurado para ejecutar funcion entrada
+                   page.update() #ver si pestañea si no desactivar
+                   break
+
+
+        def entrada():
+            page.clean()
+            navegacion_entrenador()
+            query = 'update estado_marcacion set estado = 1 where nombre = %s'
+            cursor.execute(query,(usuario_actual,))
+            cursor.fetchall()
+            db.commit()
+            print('primera parte cambio de estado tabla estado marcacion ')
+            time.sleep(2)
+            query = 'insert into marcacion_entrada(nombre,hora_ingreso) values(%s,now())'
+            cursor.execute(query,(usuario_actual,))
+            cursor.fetchall()
+            db.commit()
+            print('segunda parte lista insertar en tabla marcacion entrada')
+            time.sleep(2)
+            query = 'select hora_ingreso from marcacion_entrada where nombre = %s'
+            cursor.execute(query,(usuario_actual,))
+            resultado=cursor.fetchall()
+            print(f'{resultado}, funciono CTM')
+
+
+
+        #boton marcacion entrada
+        boton_marcacion_entrada = ft.ElevatedButton('Entrada', on_click=lambda _: entrada())
+        row30= ft.Row(controls=[boton_marcacion_entrada], alignment=ft.MainAxisAlignment.CENTER)
+        column30 = ft.Column(controls=[row30])
+
+        '''#boton Maracion salida
+        boton_marcacion_salida = ft.ElevatedButton('Salida', on_click=lambda _: salida())
+        row31 = ft.Row(controls=[boton_marcacion_salida], alignment=ft.MainAxisAlignment.CENTER)
+        column31 = ft.Column(controls=[row31])'''
+
+        #mensaje
+        mensaje_marcacion = ft.Container(content=ft.Text('RELOJ CONTROL - MARCACION',
+                                                               weight=ft.FontWeight.BOLD,
+                                                               size=20,
+                                                               font_family='consolas',
+                                                               color=ft.colors.WHITE70),
+                                               border=ft.border.all(2, color=ft.colors.WHITE70),
+                                               bgcolor=ft.colors.BROWN_900,
+                                               border_radius=30,
+                                               padding=5,
+                                               margin=10,
+                                               )
+        row32 = ft.Row(controls=[mensaje_marcacion],alignment=ft.MainAxisAlignment.CENTER)
+        column32 = ft.Column(controls=[row32])
+
+        comprobacion()
+        '''page.update()'''
+
+
+
+
+        '''global ciclo_marcacion
         global m
         page.clean()
         navegacion_entrenador()
@@ -513,7 +610,7 @@ def main(page: ft.Page):
             ciclo_marcacion =1
         else:
             page.add(texto_mensaje,boton_marcacion_salida)
-            ciclo_marcacion = 0
+            ciclo_marcacion = 0'''
 
     def agregar_comidad():
         page.clean()
@@ -666,7 +763,7 @@ def main(page: ft.Page):
                 if user == usuario and contra == contraseña:
 
                     logged_in = True
-                    usuario_actual = user
+                    usuario_actual = usuario
                     print('inicio sesion correcto como usuario')
                     inicio()
                     return
@@ -679,7 +776,7 @@ def main(page: ft.Page):
 
             if control > 0:
                 print(control)
-                time.sleep(10)
+                time.sleep(2)
                 inicio_entrenador_base()
 
         def inicio_entrenador_base():
@@ -694,7 +791,7 @@ def main(page: ft.Page):
 
                 if user == usuario and contra == contraseña:
                     logged_in = True
-                    usuario_actual = user
+                    usuario_actual = usuario
                     print('ingreso como entrenador')
                     lista_alumnos()  # Mostrar contenido de la pestaña "Explorar" al iniciar sesión
                     return
