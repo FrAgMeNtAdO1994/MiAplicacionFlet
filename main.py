@@ -36,11 +36,11 @@ def main(page: ft.Page):
 
     # conexion base de datos local
     db = mysql.connector.connect(
-        user='**',
-        password='***',
-        host='****',
-        port='**',
-        database='**'
+        user='',
+        password='',
+        host='',
+        port='',
+        database=''
 
     )
     print(db)
@@ -51,7 +51,7 @@ def main(page: ft.Page):
 
      #inicio sesion
 
-    username_label = ft.Container(content=ft.Text("Nombre de Usuario",
+    username_label = ft.Container(content=ft.Text("identificacion",
                              weight=ft.FontWeight.BOLD,
                              size=20,
                              color=ft.colors.WHITE70,
@@ -76,7 +76,7 @@ def main(page: ft.Page):
     # Crear campos de texto e tiquetas
     username_field = ft.TextField(
         autofocus=True,
-        hint_text="Ingresa tu nombre de usuario")
+        hint_text="Ingresa tu RUT")
     contenedor_username = ft.Container(content=username_field,border_radius=6, border=ft.border.all(2,ft.colors.GREY_600))
 
 
@@ -310,6 +310,7 @@ def main(page: ft.Page):
     # PESTAÑAS ENTRENADOR
 
     def ingreso_alumnos():  # POSICION 0
+        global usuario_actual
         page.clean()
         navegacion_entrenador()
         nonlocal logged_in
@@ -338,86 +339,147 @@ def main(page: ft.Page):
         row_espacio_pequeño = ft.Row(controls=[ft.Container(width=0, height=30)])
         colum_espacio_pequeño = ft.Column(controls=[row_espacio_pequeño])
 
+
         # ingreso de los datos y creacion de columnas y contenedores
 
-        nuevo_usuario = ft.TextField(label="Nuevo Nombre de Usuario")
+        nuevo_rut_usuario = ft.TextField(autofocus=True, label='Ingrese Rut')
+        nuevo_rut_usuario_container = ft.Container(content=nuevo_rut_usuario, border_radius=6,
+                                                   border=ft.border.all(2, color=ft.colors.WHITE70))
+        column24 = ft.Column(controls=[nuevo_rut_usuario_container])
+
+        nuevo_usuario = ft.TextField(autofocus=True, label="Nombre de Usuario")
         nuevo_usuario_container = ft.Container(content=nuevo_usuario, border_radius=6,
                                                border=ft.border.all(2, color=ft.colors.WHITE70))
         column21 = ft.Column(controls=[nuevo_usuario_container])
+
+        nuevo_apellido_usuario = ft.TextField(label='Apellido')
+        nuevo_apellido_usuario_container = ft.Container(content=nuevo_apellido_usuario, border_radius=6,
+                                                        border=ft.border.all(2, color=ft.colors.WHITE70))
+        column25 = ft.Column(controls=[nuevo_apellido_usuario_container])
 
         nueva_contraseña = ft.TextField(label="Nueva Contraseña", password=True)
         nueva_contraseña_container = ft.Container(content=nueva_contraseña, border_radius=6,
                                                   border=ft.border.all(2, ft.colors.WHITE70))
         column22 = ft.Column(controls=[nueva_contraseña_container])
 
-        def register_user(e):
+
+
+
+        def variables():
+            page.clean()
+            rut = nuevo_rut_usuario.value
+            usuario = nuevo_usuario.value.lower()
+            apellido = nuevo_apellido_usuario.value.lower()
+            contraseña = nueva_contraseña.value.lower()
+            rut = int(rut)
+            register_user(rut,usuario,apellido,contraseña)
+
+
+        def register_user(rut,usuario,apellido,contraseña):
             cursor = db.cursor()
             verificacion = 0
-            usuario = nuevo_usuario.value
-            contraseña = nueva_contraseña.value
-            query = 'select nombre from usuarios'
+            query = 'select rut from usuarios'
             cursor.execute(query)
             resultado = cursor.fetchall()
 
-            if usuario == '' and contraseña == '':
+
+            if contraseña =='' and usuario == '' and apellido== '' and contraseña == '':
                 print('no completo los campos')
                 page.add(ft.Text('Complete los campos Obligatorios'))
                 page.update()
                 return
 
-            elif usuario != '' and contraseña != '':
+            elif contraseña !='' and usuario != '' and apellido !='' and contraseña != '':
 
-                for user in resultado:
-                    if usuario == user[0]:
+                for rutt in resultado:
+                    if rut == rutt[0]:
                         print('Usuario ya existe')
                         mensaje_error = 'Usuario ya existe'
                         page.add(ft.Text(mensaje_error, color="white"))
+                        nuevo_rut_usuario.value =''
+                        nuevo_apellido_usuario.value=''
                         nuevo_usuario.value = ''
                         nueva_contraseña.value = ''
-                        page.update()
-                        return
+                        '''page.update()'''
+                        navegacion_usuario()
+                        break
+
+
+
 
 
                     else:
                         verificacion = 1
 
                 if verificacion == 1:
-                    query = 'insert into usuarios(nombre,contraseña) VALUE(%s,%s)'
-                    cursor.execute(query, (usuario, contraseña))
+                    '''page.clean()'''
+                    query = 'insert into usuarios(rut,nombre,apellido,contraseña) VALUE(%s,%s,%s,%s)'
+                    cursor.execute(query, (rut,usuario,apellido, contraseña,))
                     db.commit()
+
+                    #ingreso de entrenador a tabla usurio_entrenador
+                    query = 'update usuario_entrenador set rut_entrenador = %s where rut_usuario = %s '
+                    cursor.execute(query,(usuario_actual,rut,))
+                    db.commit()
+                    print('primera parte')
+
+                    #finalizacion de ingreso
+                    nuevo_apellido_usuario.value =''
+                    nuevo_rut_usuario.value= ''
                     nuevo_usuario.value = ''
                     nueva_contraseña.value = ''
                     mensaje_ingreso = 'Usuario ingresado'
                     page.add(ft.Text(mensaje_ingreso, color="white"))
+                    time.sleep(2)
                     print('Usuario ingresado')
+                    ingreso_alumnos()
 
 
 
-        register_button = ft.ElevatedButton("Registrar Usuario", on_click=register_user)
+        register_button = ft.ElevatedButton("Registrar Usuario", on_click=lambda _:variables())
 
         # agregar elementos a la pagina
         # boton de cierre de sesion corresponde al del menu en general por lo cual es el mismo para todas las funciones
 
-        page.add(column_CierreSesion, colum_espacio_N_User, colum_container_label, colum_espacio_pequeño, column21,
+        page.add(column_CierreSesion, colum_espacio_N_User, colum_container_label, colum_espacio_pequeño,
+                 column24,
+                 column21,
+                 column25,
                  column22,
-                 register_button)
-        page.update()
+                 register_button,
+                 column26)
+
 
     def lista_alumnos():
+        global usuario_actual
+        cursor = db.cursor()
         page.clean()
         page.bgcolor = ft.colors.TRANSPARENT
         page.decoration = ft.BoxDecoration(image=ft.DecorationImage('fondo1.jpg'))
         navegacion_entrenador()
-        lista =[]
-        for i in clientes:
-            lista.append(ft.Text(i))
 
-        columna_alumno=ft.Column(controls=lista)
-        etiqueta1 = ft.Text('Listado Alumnos',weight=ft.FontWeight.BOLD,size=30,color=ft.colors.WHITE70)
-        logout_button = ft.ElevatedButton("Cerrar Sesión", on_click=lambda e: logout())
-        page.add(etiqueta1,columna_alumno,logout_button)
 
-        page.update()
+        def analisis_usuarios():
+            query = 'select nombre_usuario,apellido_usuario from usuario_entrenador where rut_entrenador = %s'
+            cursor.execute(query,(usuario_actual,))
+            resultado = cursor.fetchall()
+            print(resultado)
+            insertar(resultado)
+
+        def insertar(resultado):
+            lista=[]
+            for nom,apelli in resultado:
+                print(f'{nom} {apelli}')
+                lista.append(ft.Text(f'{nom} {apelli}'))
+
+            columna_alumno = ft.Column(controls=lista)
+            page.add(column_CierreSesion, column_espacio, columna_alumno)
+
+
+
+
+        analisis_usuarios()
+
 
     def agregar_rutinas():
         page.clean()
@@ -513,19 +575,34 @@ def main(page: ft.Page):
                 if estado[0] == 0:
                    page.clean()
                    print('marcando entrada')
-                   page.add(column32,column30) #agrega los botones para marcar entrada,boton configurado para ejecutar funcion entrada
+                   page.add(column_CierreSesion,column_espacio,column32,column30) #agrega los botones para marcar entrada,boton configurado para ejecutar funcion entrada
                    page.update() #ver si pestañea si no desactivar
                    break
 
+                elif estado[0] ==1:
+                    page.clean()
+                    print('Marcando Salida')
+                    page.add(column_CierreSesion,column_espacio,column32,column31)
+                    page.update()
+                    break
+
+
 
         def entrada():
-            page.clean()
+            cargando = ft.Text('Firmando entrada')
+            page.add(cargando)
+            '''page.clean()'''
             navegacion_entrenador()
             query = 'update estado_marcacion set estado = 1 where nombre = %s'
             cursor.execute(query,(usuario_actual,))
             cursor.fetchall()
             db.commit()
             print('primera parte cambio de estado tabla estado marcacion ')
+            time.sleep(2)
+            query = 'select estado from estado_marcacion where nombre = %s'
+            cursor.execute(query,(usuario_actual,))
+            estado= cursor.fetchall()
+            print(f'estado actual es {estado}')
             time.sleep(2)
             query = 'insert into marcacion_entrada(nombre,hora_ingreso) values(%s,now())'
             cursor.execute(query,(usuario_actual,))
@@ -535,8 +612,56 @@ def main(page: ft.Page):
             time.sleep(2)
             query = 'select hora_ingreso from marcacion_entrada where nombre = %s'
             cursor.execute(query,(usuario_actual,))
-            resultado=cursor.fetchall()
-            print(f'{resultado}, funciono CTM')
+            resultado =cursor.fetchall()
+            print(f'{resultado}, funciono entrada')
+            mensaje_final(estado)
+
+        def salida():
+            cargando = ft.Text('Firmando Salida')
+            page.add(cargando)
+            '''page.clean()'''
+            navegacion_entrenador()
+            query = 'update estado_marcacion set estado = 0 where nombre = %s'
+            cursor.execute(query,(usuario_actual,))
+            cursor.fetchall()
+            db.commit()
+            print('cambio estado de la tabla estado_marcacion')
+            time.sleep(2)
+            query = 'select estado from estado_marcacion where nombre = %s'
+            cursor.execute(query,(usuario_actual,))
+            estado = cursor.fetchall()
+            print(f' estado actual es {estado}')
+            time.sleep(2)
+            query = 'insert into marcacion_salida(nombre,hora_salida) value(%s,now())'
+            cursor.execute(query,(usuario_actual,))
+            cursor.fetchall()
+            db.commit()
+            print('se ingresaron los datos a tabla marcacion_salida')
+            time.sleep(2)
+            query = 'select hora_salida from marcacion_salida where nombre = %s'
+            cursor.execute(query,(usuario_actual,))
+            resultado = cursor.fetchall()
+            print(f'{resultado}, funciono la salida')
+            mensaje_final(estado)
+
+        def mensaje_final(estado):
+            print('ventana final para volver')
+
+            for i in estado:
+
+                if i[0] == 0:
+                    page.clean()
+                    page.add(column_espacio,column_boton_volver_marcacion)
+                    page.update()
+                    print('Tu Hora de salida fue....')
+                    break
+
+                else:
+                    page.clean()
+                    page.add(column_espacio,column_boton_volver_marcacion)
+                    page.update()
+                    print('Tu hora de entrada fue....')
+                    break
 
 
 
@@ -545,10 +670,10 @@ def main(page: ft.Page):
         row30= ft.Row(controls=[boton_marcacion_entrada], alignment=ft.MainAxisAlignment.CENTER)
         column30 = ft.Column(controls=[row30])
 
-        '''#boton Maracion salida
+        #boton Maracion salida
         boton_marcacion_salida = ft.ElevatedButton('Salida', on_click=lambda _: salida())
         row31 = ft.Row(controls=[boton_marcacion_salida], alignment=ft.MainAxisAlignment.CENTER)
-        column31 = ft.Column(controls=[row31])'''
+        column31 = ft.Column(controls=[row31])
 
         #mensaje
         mensaje_marcacion = ft.Container(content=ft.Text('RELOJ CONTROL - MARCACION',
@@ -565,52 +690,15 @@ def main(page: ft.Page):
         row32 = ft.Row(controls=[mensaje_marcacion],alignment=ft.MainAxisAlignment.CENTER)
         column32 = ft.Column(controls=[row32])
 
+
+        boton_volver_marcacion = ft.ElevatedButton('Volver',on_click=lambda _:marcacion())
+        row_boton_marcacion_volver = ft.Row(controls=[boton_volver_marcacion], alignment=ft.MainAxisAlignment.CENTER)
+        column_boton_volver_marcacion = ft.Column(controls=[row_boton_marcacion_volver])
+
+
+
         comprobacion()
-        '''page.update()'''
-
-
-
-
-        '''global ciclo_marcacion
-        global m
-        page.clean()
-        navegacion_entrenador()
-        texto_mensaje = ft.Text('Marcar Entrada y Salida',size=20, color=ft.colors.WHITE70)
-
-        def final_marcacion():
-            global m
-            if m == 0:
-                page.clean()
-                text = ft.Text('Marcacion Efectuada')
-                timer_clock = datetime.now().strftime('%H:%M:%S')
-                reloj_clock = ft.Text(f' Hora de marcacion entrada: {timer_clock}')
-                m=1
-                lista_marcaciones.append(f'{usuario_actual} {timer_clock}')
-                print(f'{lista_marcaciones}')
-                page.add(text,reloj_clock,boton_marcacion_volver)
-                page.update()
-
-            elif m == 1:
-                page.clean()
-                text = ft.Text('Marcacion Efectuada')
-                timer_clock = datetime.now().strftime('%H:%M:%S')
-                reloj_clock = ft.Text(f' Hora de marcacion salida: {timer_clock}')
-                m = 0
-                lista_marcaciones.append(f'{usuario_actual} {timer_clock}')
-                print(f'{lista_marcaciones}')
-                page.add(text, reloj_clock,boton_marcacion_volver)
-                page.update()
-
-        boton_marcacion_entrada = ft.ElevatedButton('Entrada', on_click=lambda _: final_marcacion())
-        boton_marcacion_salida = ft.ElevatedButton('Salida', on_click=lambda _: final_marcacion())
-        boton_marcacion_volver = ft.ElevatedButton('Volver', on_click=lambda _: marcacion())
-
-        if ciclo_marcacion ==0:
-            page.add(texto_mensaje, boton_marcacion_entrada)
-            ciclo_marcacion =1
-        else:
-            page.add(texto_mensaje,boton_marcacion_salida)
-            ciclo_marcacion = 0'''
+        
 
     def agregar_comidad():
         page.clean()
@@ -746,24 +834,26 @@ def main(page: ft.Page):
     def login():
         global usuario_actual
         nonlocal logged_in  # Usar la variable externa
-        usuario = username_field.value.lower()
-        contraseña = password_field.value.lower()
+        usuario = username_field.value
+        contraseña = password_field.value
 
-        def inicio_usuario_base():
+
+        def inicio_usuario_base(usuario,contraseña):
             control = 0
             cursor = db.cursor()
             global usuario_actual
             nonlocal logged_in
-            query = 'SELECT nombre,contraseña from usuarios'
+            query = 'SELECT rut,contraseña from usuarios'
             cursor.execute(query)
             resultado = cursor.fetchall()
+            print(resultado)
 
-            for user, contra in resultado:
+            for rut, contra in resultado:
                 control += 0
-                if user == usuario and contra == contraseña:
+                if rut == int(usuario) and contra == contraseña:
 
                     logged_in = True
-                    usuario_actual = usuario
+                    usuario_actual = int(usuario)
                     print('inicio sesion correcto como usuario')
                     inicio()
                     return
@@ -783,15 +873,15 @@ def main(page: ft.Page):
             cursor = db.cursor()
             nonlocal logged_in
             global usuario_actual
-            query = 'SELECT nombre,contraseña from entrenador'
+            query = 'SELECT rut,contraseña from entrenador'
             cursor.execute(query)
             resultado = cursor.fetchall()
 
-            for user, contra in resultado:
+            for rut, contra in resultado:
 
-                if user == usuario and contra == contraseña:
+                if rut == int(usuario) and contra == contraseña:
                     logged_in = True
-                    usuario_actual = usuario
+                    usuario_actual = int(usuario)
                     print('ingreso como entrenador')
                     lista_alumnos()  # Mostrar contenido de la pestaña "Explorar" al iniciar sesión
                     return
@@ -806,9 +896,10 @@ def main(page: ft.Page):
             page.add(ft.Text("Credenciales incorrectas.", color="red"))
             page.update()
 
-        inicio_usuario_base()
+        inicio_usuario_base(usuario,contraseña)
 
-    #SEPARADOR_______________________________
+
+    #SEPARADOR_______________________________   
 
     #Barra navegacion USUARIO
 
