@@ -3,6 +3,7 @@ from flet_core import ImageFit
 from datetime import datetime
 import time
 import mysql.connector
+from flet_timer.flet_timer import Timer
 
 
 contador_respuestas = 1
@@ -447,7 +448,7 @@ def main(page: ft.Page):
                  column25,
                  column22,
                  register_button,
-                 column26)
+                 )
 
 
     def lista_alumnos():
@@ -482,12 +483,142 @@ def main(page: ft.Page):
 
 
     def agregar_rutinas():
+        cursor= db.cursor()
+        global usuario_actual
         page.clean()
         navegacion_entrenador()
         rutina_clientes = ft.TextField(autofocus=True,hint_text='Ingresa el nombre de Cliente')
 
+        query = 'select nombre_usuario,apellido_usuario,rut_usuario from usuario_entrenador where rut_entrenador = %s'
+        cursor.execute(query,(usuario_actual,))
+        resultado = cursor.fetchall()
+        lista2 = []
+        for user,apellido,rut in resultado:
+            nombre_completo = f'{user} {apellido} {rut}'
+            print(nombre_completo)
+            lista2.append(nombre_completo)
 
-        def verificacion_usuario():
+        print(lista2)
+
+
+        mostrar_alumnos = ft.Dropdown(
+        label="Selecciona alumno",
+        options=[
+            ft.dropdown.Option(nombre) for nombre in lista2
+        ])
+
+        def comprobacion():
+            page.clean()
+            loading_container = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.ProgressRing(),  # Anillo de progreso
+                        ft.Text("Cargando...", size=20, weight="bold", color=ft.colors.BLUE_500)  # Texto de carga
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
+                alignment=ft.alignment.center,
+                expand=True
+            )
+
+
+            page.add(loading_container)
+
+            cursor = db.cursor()
+            dias = ['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','Domingo']
+
+            #sacar el rut de la seleccion del nombre del usuario
+            menu = mostrar_alumnos.value
+            if menu:
+                RUT = menu.split()[-1]
+            print(f'Rut seleccionado: {RUT}')  #la varuable que contiene el rut es RUT
+
+
+            #MENU ELECCION DIA
+            mostrar_dias = ft.Dropdown(
+                label='Seleccion dia',
+                options=[
+                    ft.dropdown.Option(dia) for dia in dias
+                ]
+            )
+
+
+            #text field
+            ingreso_rutinasss = ft.TextField(
+                label="Ingrese texto",
+                hint_text="Escribe aquí...",
+                width=700,
+                height=400,
+                bgcolor=ft.colors.SCRIM,  # Color de fondo
+                border_color=ft.colors.BLUE_500,  # Color del borde
+                border_radius=10,  # Bordes redondeados
+                multiline=True,
+                max_lines=10,
+                focused_border_color=ft.colors.GREEN_500,  # Color del borde al enfocar
+
+                content_padding=ft.Padding(left=10, top=10, right=10, bottom=10)  # Ajustar padding
+            )
+            row50 = ft.Row(controls=[ingreso_rutinasss],alignment=ft.MainAxisAlignment.CENTER)
+            column50 = ft.Column(controls=[row50])
+
+            time.sleep(2)
+            print('llego aqui\n')
+
+            boton_insertar = ft.ElevatedButton('Grabar', on_click=lambda _:variables_ingreso(ingreso_rutinasss,mostrar_dias,RUT))
+            page.clean()
+            page.add(column41,mostrar_dias,column44,row50,boton_insertar)
+
+
+
+        def variables_ingreso(ingreso_rutinas,dias,rut):
+            RUTINA = ingreso_rutinas.value.lower()
+            DIA = dias.value
+            RUT = rut
+            print(f'{RUTINA} {DIA} {RUT}')
+
+
+            if RUTINA and DIA and RUT:
+                print('variables con datos\n')
+            else:
+                print('variables vacias\n')
+            ingreso_rutinas_alumno(DIA,RUTINA,RUT)
+
+
+        def ingreso_rutinas_alumno(DIA,RUTINA,RUT):
+            query = f'update rutinas set {DIA}=%s where rut_usuario = %s'
+            cursor.execute(query,(RUTINA,int(RUT),))
+            db.commit()
+            query = 'update rutinas set rut_entrenador = %s where rut_usuario = %s'
+            cursor.execute(query,(usuario_actual,int(RUT)))
+            db.commit()
+            print('ingreso exitoso')
+            mensaje_ingreso = ft.Text('Ingreso de rutina exitoso')
+            page.add(mensaje_ingreso)
+            page.clean()
+            loading_container = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.ProgressRing(),  # Anillo de progreso
+                        ft.Text("Ingreso Exitoso", size=20, weight="bold", color=ft.colors.BLUE_500)  # Texto de carga
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
+                alignment=ft.alignment.center,
+                expand=True
+            )
+            page.add(loading_container)
+
+            time.sleep(3)
+
+            agregar_rutinas()
+
+
+
+
+
+
+
+        ''' verificacion_usuario():
             r_c = rutina_clientes.value.lower()
             if r_c in clientes:
                 if r_c not in rutinas:
@@ -527,13 +658,29 @@ def main(page: ft.Page):
             rutinas[r_c]= rutina
             mensaje_final = ft.Text('Rutina guardada existosamente')
             print(rutinas)
-            page.add(mensaje_final, boton_retroceso)
+            page.add(mensaje_final, boton_retroceso)'''
 
+
+
+        #etiqueta pantalla principal
         etiqueta2 = ft.Text('Ingresar Rutinas', weight=ft.FontWeight.BOLD,size=30,color=ft.colors.WHITE70)
+        row40 = ft.Row(controls=[etiqueta2],alignment=ft.MainAxisAlignment.CENTER)
+        column40 = ft.Column(controls=[row40])
+
+        #etiqueta Seleccion Dia
+        etiqueta3 = ft.Text('Selecciona el Dia', weight=ft.FontWeight.BOLD, size=20, color=ft.colors.WHITE70)
+        row41 = ft.Row(controls=[etiqueta3], alignment=ft.MainAxisAlignment.CENTER)
+        column41 = ft.Column(controls=[row41])
+
+        #Etiqueta Ingresa rutina
+        etiqueta4 = ft.Text('Ingresa la rutina', weight=ft.FontWeight.BOLD, size=20, color=ft.colors.WHITE70)
+        row44 = ft.Row(controls=[etiqueta4], alignment=ft.MainAxisAlignment.CENTER)
+        column44 = ft.Column(controls=[row44])
+
         boton_retroceso = ft.ElevatedButton('Volver',on_click=lambda e: agregar_rutinas())
-        boton_buscar=ft.ElevatedButton('Buscar', on_click=lambda e: verificacion_usuario() )
-        page.add(etiqueta2,rutina_clientes,boton_buscar)
-        page.update()
+        boton_buscar=ft.ElevatedButton('Buscar', on_click=lambda e: comprobacion() )
+        page.add(column_CierreSesion,column_espacio,column40,mostrar_alumnos,boton_buscar)
+        '''page.update()'''
 
     def marcacion():
         global usuario_actual
@@ -546,7 +693,7 @@ def main(page: ft.Page):
             page.clean()
             navegacion_entrenador()
             page.update()
-            query = 'select nombre from estado_marcacion'
+            query = 'select rut from estado_marcacion'
             cursor.execute(query)
             resultados = cursor.fetchall()
             print(resultados)
@@ -556,7 +703,7 @@ def main(page: ft.Page):
             for user in resultados:
                 print('entro al for')
                 if usuario_actual==user[0]:
-                    query = 'select estado from estado_marcacion where nombre = %s'
+                    query = 'select estado from estado_marcacion where rut = %s'
                     cursor.execute(query,(usuario_actual,))
                     resultado = cursor.fetchall()
                     print(f'el estado del usuario {usuario_actual}, es {resultado}')
@@ -593,56 +740,69 @@ def main(page: ft.Page):
             page.add(cargando)
             '''page.clean()'''
             navegacion_entrenador()
-            query = 'update estado_marcacion set estado = 1 where nombre = %s'
+            query = 'update estado_marcacion set estado = 1 where rut = %s'
             cursor.execute(query,(usuario_actual,))
-            cursor.fetchall()
             db.commit()
             print('primera parte cambio de estado tabla estado marcacion ')
+
+
             time.sleep(2)
-            query = 'select estado from estado_marcacion where nombre = %s'
+            query = 'select estado from estado_marcacion where rut = %s'
             cursor.execute(query,(usuario_actual,))
             estado= cursor.fetchall()
             print(f'estado actual es {estado}')
             time.sleep(2)
-            query = 'insert into marcacion_entrada(nombre,hora_ingreso) values(%s,now())'
+
+
+            query = 'insert into marcacion_entrada(rut,hora_entrada) values(%s,now())'
             cursor.execute(query,(usuario_actual,))
             cursor.fetchall()
             db.commit()
             print('segunda parte lista insertar en tabla marcacion entrada')
+
+
             time.sleep(2)
-            query = 'select hora_ingreso from marcacion_entrada where nombre = %s'
+            query = 'select hora_entrada from marcacion_entrada where rut = %s'
             cursor.execute(query,(usuario_actual,))
             resultado =cursor.fetchall()
             print(f'{resultado}, funciono entrada')
             mensaje_final(estado)
+
 
         def salida():
             cargando = ft.Text('Firmando Salida')
             page.add(cargando)
             '''page.clean()'''
             navegacion_entrenador()
-            query = 'update estado_marcacion set estado = 0 where nombre = %s'
+
+
+            query = 'update estado_marcacion set estado = 0 where rut = %s'
             cursor.execute(query,(usuario_actual,))
             cursor.fetchall()
             db.commit()
             print('cambio estado de la tabla estado_marcacion')
+
             time.sleep(2)
-            query = 'select estado from estado_marcacion where nombre = %s'
+            query = 'select estado from estado_marcacion where rut = %s'
             cursor.execute(query,(usuario_actual,))
             estado = cursor.fetchall()
             print(f' estado actual es {estado}')
             time.sleep(2)
-            query = 'insert into marcacion_salida(nombre,hora_salida) value(%s,now())'
+
+
+            query = 'insert into marcacion_salida(rut,hora_salida) value(%s,now())'
             cursor.execute(query,(usuario_actual,))
             cursor.fetchall()
             db.commit()
             print('se ingresaron los datos a tabla marcacion_salida')
             time.sleep(2)
-            query = 'select hora_salida from marcacion_salida where nombre = %s'
+
+            query = 'select hora_salida from marcacion_salida where rut = %s'
             cursor.execute(query,(usuario_actual,))
             resultado = cursor.fetchall()
             print(f'{resultado}, funciono la salida')
             mensaje_final(estado)
+
 
         def mensaje_final(estado):
             print('ventana final para volver')
@@ -654,6 +814,7 @@ def main(page: ft.Page):
                     page.add(column_espacio,column_boton_volver_marcacion)
                     page.update()
                     print('Tu Hora de salida fue....')
+                    marcacion()
                     break
 
                 else:
@@ -661,6 +822,7 @@ def main(page: ft.Page):
                     page.add(column_espacio,column_boton_volver_marcacion)
                     page.update()
                     print('Tu hora de entrada fue....')
+                    marcacion()
                     break
 
 
