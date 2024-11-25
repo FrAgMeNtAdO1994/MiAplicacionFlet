@@ -35,13 +35,24 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER'''
     txt_time = ft.Text(value="Hora actual: ", size=24)
 
+
+    #prueba
+    animation_container = ft.Container(
+        bgcolor=ft.colors.WHITE,
+        border_radius=20,
+        padding=ft.padding.all(20),
+        content=ft.Text("Comidas Ingresadas", size=24, weight="bold", color=ft.colors.GREEN_500),
+        alignment=ft.alignment.center,
+        visible=False  # Inicialmente oculto
+    )
+
     # conexion base de datos local
     db = mysql.connector.connect(
-        user='',
-        password='',
-        host='',
-        port='',
-        database=''
+        user='root',
+        password='2603Mario@',
+        host='localhost',
+        port='3306',
+        database='base_produccion'
 
     )
     print(db)
@@ -120,12 +131,96 @@ def main(page: ft.Page):
         page.update()
 
     def rutina_asignada():
+        cursor = db.cursor()
         global usuario_actual
-        global rutinas
         page.clean()
         navegacion_usuario()
 
-        mensaje_1 = ft.Text(f'{usuario_actual.upper()}, Tu Rutina es: ',size=20,font_family='consolas', color=ft.colors.WHITE70,weight=ft.FontWeight.BOLD)
+
+        query = 'select nombre,apellido from usuarios where rut = %s'
+        cursor.execute(query,(usuario_actual,))
+        resultado = cursor.fetchall()
+        for nombre,apellido in resultado:
+            nombre_completo = f'{nombre} {apellido}'
+        print(nombre_completo)
+
+        # menus y etiquetas
+        etiqueta_1 = mensaje_1 = ft.Text(f'{nombre_completo.upper()}, verifica tu rutina: ',size=20,font_family='consolas', color=ft.colors.WHITE70,weight=ft.FontWeight.BOLD)
+        dias = ['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','Domingo']
+        mostrar_dias = ft.Dropdown(
+            label=" Selecciona el dia",
+            options=[
+                ft.dropdown.Option(DIAS) for DIAS in dias],
+            bgcolor=ft.colors.SCRIM,
+            border_color=ft.colors.GREEN_500)
+        boton_verificar = ft.ElevatedButton('Verificar rutina', on_click=lambda _:verificacion_dia(mostrar_dias.value))
+        page.add(column_CierreSesion,column_espacio,etiqueta_1,mostrar_dias,boton_verificar)
+
+        def verificacion_dia(dia_seleccionado):
+
+            page.clean()
+            loading_container = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.ProgressRing(),  # Anillo de progreso
+                        ft.Text("Verificando Rutina", size=20, weight="bold", color=ft.colors.GREEN_500, )  # Texto de carga
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER
+
+                ),
+                alignment=ft.alignment.center,
+                expand=True,
+                border= ft.border.all(2,ft.colors.GREEN_500)
+            )
+            page.clean()
+            page.add(loading_container)
+
+            DIA = dia_seleccionado
+
+            if DIA:
+                print('variable con datos correctos')
+            else:
+                print('variable sin datos')
+
+            print(DIA)
+
+            query = f'select {DIA} from rutinas where rut_usuario = %s'
+            cursor.execute(query,(usuario_actual,))
+            rutina = cursor.fetchall()
+            print(rutina)
+
+            for ruti in rutina:
+                rutina_final = ruti[0]
+            print(rutina_final)
+            time.sleep(3)
+            mostrar_rutina(rutina_final,DIA)
+
+
+        def mostrar_rutina(rutina,dia):
+
+            page.clean()
+
+            mensaje_2 = f'Tu rutina de dia {dia} es:'
+            etiqueta_2 =ft.Text(f'{mensaje_2}', size=20,
+                                             font_family='consolas', color=ft.colors.WHITE70, weight=ft.FontWeight.BOLD)
+
+
+            mostrar_rutina = ft.Container(content=ft.Text(rutina),
+                                            border=ft.border.all(2, ft.colors.GREEN_500),
+                                            width=450, height=500,
+                                            bgcolor=ft.colors.SCRIM
+                                            )
+            row6 = ft.Row(controls=[mostrar_rutina], alignment=ft.MainAxisAlignment.CENTER)
+            column6 = ft.Column(controls=[row6])
+
+            page.add(etiqueta_2,column6)
+
+
+
+
+
+
+        '''mensaje_1 = ft.Text(f'{usuario_actual.upper()}, Tu Rutina es: ',size=20,font_family='consolas', color=ft.colors.WHITE70,weight=ft.FontWeight.BOLD)
 
         row5 = ft.Row(controls=[mensaje_1],alignment=ft.MainAxisAlignment.CENTER)
         column5 = ft.Column(controls=[row5])
@@ -171,7 +266,7 @@ def main(page: ft.Page):
         row_boton_verificar = ft.Row(controls=[boton_verificar],alignment=ft.MainAxisAlignment.CENTER)
         column_boton_verificar = ft.Column(controls=[row_boton_verificar])
 
-        page.add(column_CierreSesion,column_espacio_rutinas,column5,column_boton_verificar)
+        page.add(column_CierreSesion,column_espacio_rutinas,column5,column_boton_verificar)'''
 
     def comidas_asignadas():
         global usuario_actual
@@ -487,7 +582,7 @@ def main(page: ft.Page):
         global usuario_actual
         page.clean()
         navegacion_entrenador()
-        rutina_clientes = ft.TextField(autofocus=True,hint_text='Ingresa el nombre de Cliente')
+        rutina_clientes = ft.TextField(autofocus=True,hint_text='Selecciona el Usuario')
 
         query = 'select nombre_usuario,apellido_usuario,rut_usuario from usuario_entrenador where rut_entrenador = %s'
         cursor.execute(query,(usuario_actual,))
@@ -612,56 +707,6 @@ def main(page: ft.Page):
 
             agregar_rutinas()
 
-
-
-
-
-
-
-        ''' verificacion_usuario():
-            r_c = rutina_clientes.value.lower()
-            if r_c in clientes:
-                if r_c not in rutinas:
-                    page.clean()
-                    ingreso_label = ft.Text(f'ingresa una rutina para:  {r_c.upper()}',weight=ft.FontWeight.BOLD,
-                                            size=20,
-                                            font_family='consolas',
-                                            color=ft.colors.WHITE)
-
-                    rutina_field= ft.TextField(autofocus=True, multiline=True)
-                    page.add(ingreso_label,rutina_field)
-
-                    boton_ingreso_rutina = ft.ElevatedButton('Ingresar rutina', on_click=lambda e: guardar(r_c, rutina_field.value))
-                    page.add(boton_ingreso_rutina,boton_retroceso)
-
-                else:
-                    page.clean()
-                    mensaje = ft.Text('El usuario ya tiene rutina')
-
-                    # Asegúrate de que rutinas[r_c] existe antes de acceder
-                    if r_c in rutinas:
-                        mostrar = rutinas[r_c]# Accede directamente al valor
-                        columna_rutina = ft.Column(
-                            controls=[ft.Text(mostrar)])  # Asegúrate de que sea una lista de controles
-                        page.add(columna_rutina, mensaje, boton_retroceso)
-                    else:
-                        page.add(ft.Text("No se encontró rutina para el usuario."), boton_retroceso)
-
-
-            else:
-                page.clean()
-                mensaje = ft.Text('Usuario No encontrado')
-                page.add(mensaje,boton_retroceso)
-
-        def guardar(r_c,rutina):
-            page.clean()
-            rutinas[r_c]= rutina
-            mensaje_final = ft.Text('Rutina guardada existosamente')
-            print(rutinas)
-            page.add(mensaje_final, boton_retroceso)'''
-
-
-
         #etiqueta pantalla principal
         etiqueta2 = ft.Text('Ingresar Rutinas', weight=ft.FontWeight.BOLD,size=30,color=ft.colors.WHITE70)
         row40 = ft.Row(controls=[etiqueta2],alignment=ft.MainAxisAlignment.CENTER)
@@ -680,7 +725,7 @@ def main(page: ft.Page):
         boton_retroceso = ft.ElevatedButton('Volver',on_click=lambda e: agregar_rutinas())
         boton_buscar=ft.ElevatedButton('Buscar', on_click=lambda e: comprobacion() )
         page.add(column_CierreSesion,column_espacio,column40,mostrar_alumnos,boton_buscar)
-        '''page.update()'''
+
 
     def marcacion():
         global usuario_actual
@@ -863,12 +908,194 @@ def main(page: ft.Page):
         
 
     def agregar_comidad():
+        cursor = db.cursor()
         page.clean()
         navegacion_entrenador()
-        ingresar_nombre_cliente = ft.TextField(autofocus=True, hint_text='ingresa nombre del cliente')
-        page.update()
+        ingresar_nombre_cliente = ft.TextField(autofocus=True, hint_text='Selecciona el Usuario')
 
-        def agregar():
+
+        #busqueda de los datos del usuario
+        query = 'select nombre_usuario,apellido_usuario,rut_usuario from usuario_entrenador where rut_entrenador = %s'
+        cursor.execute(query,(usuario_actual,))
+        nombre_completo = cursor.fetchall()
+        lista=[]
+        for nombre,apellido,rut in nombre_completo:
+            usuarios = f'{nombre} {apellido} {rut}'
+            lista.append(usuarios)
+
+        print(lista)
+        #eleccion del usuario (menu desplegable)
+        mostrar_alumnos = ft.Dropdown(
+            label="Selecciona alumno",
+            options=[
+                ft.dropdown.Option(usuarios_nombres) for usuarios_nombres in lista
+            ])
+
+        boton_search = ft.ElevatedButton('Buscar', on_click=lambda _: analisis(mostrar_alumnos.value))
+        page.add(column_CierreSesion,column_espacio,mostrar_alumnos,boton_search)
+
+
+        def analisis(alumnos):
+
+            loading_container = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.ProgressRing(),  # Anillo de progreso
+                        ft.Text("Cargando...", size=20, weight="bold", color=ft.colors.BLUE_500)  # Texto de carga
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
+                alignment=ft.alignment.center,
+                expand=True
+            )
+            page.add(loading_container)
+
+            #seleccion RUT usuario
+            if alumnos:
+                seleccion_rut = alumnos.split()[-1]
+            print(seleccion_rut)
+
+            time.sleep(3)
+
+            #seleccion dias
+            dias_comidas = ['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','Domingo']
+            mostrar_dias_comidas = ft.Dropdown(
+                label="Selecciona alumno",
+                options=[
+                    ft.dropdown.Option(seleccion_dias) for seleccion_dias in dias_comidas
+                ])
+
+            #Ingreso de comidas
+            ingreso_comidas = ft.TextField(
+                label="Ingrese texto",
+                hint_text="Escribe aquí...",
+                width=700,
+                height=400,
+                bgcolor=ft.colors.SCRIM,  # Color de fondo
+                border_color=ft.colors.BLUE_500,  # Color del borde
+                border_radius=10,  # Bordes redondeados
+                multiline=True,
+                max_lines=10,
+                focused_border_color=ft.colors.GREEN_500,  # Color del borde al enfocar
+
+                content_padding=ft.Padding(left=10, top=10, right=10, bottom=10)  # Ajustar padding
+            )
+
+            boton_ingreso_comidas = ft.ElevatedButton('Ingresar Comidas', on_click=lambda _: verificar_variables(seleccion_rut,
+                                                                                                         mostrar_dias_comidas.value,
+                                                                                                             ingreso_comidas.value))
+            row60 = ft.Row(controls=[boton_ingreso_comidas], alignment=ft.MainAxisAlignment.CENTER)
+            column60 = ft.Column(controls=[row60])
+            page.clean()
+            page.add(mostrar_dias_comidas,ingreso_comidas,column60)
+
+
+            def verificar_variables(rut,dias,comidas):
+                print('verificando variables')
+                RUT = int(rut)
+                DIA = dias
+                COMIDA = comidas
+
+                if RUT and DIA and COMIDA:
+                    print('Variables con datos')
+                else:
+                    print('variables sin datos')
+
+                ingreso_comidas_usuarios(RUT,DIA,COMIDA)
+
+            def ingreso_comidas_usuarios(RUT,DIA,COMIDA):
+                page.clean()
+
+                loading_container = ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.ProgressRing(),  # Anillo de progreso
+                            ft.Text("Cargando...", size=20, weight="bold", color=ft.colors.BLUE_500)  # Texto de carga
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER
+                    ),
+                    alignment=ft.alignment.center,
+                    expand=True
+                )
+                page.add(loading_container)
+
+                query = f'update comidas set {DIA}=%s where rut_usuario_comidas = %s'
+                cursor.execute(query,(COMIDA,RUT,))
+                db.commit()
+                time.sleep(2)
+                query = 'update comidas set rut_entrenador_comidas =%s where rut_usuario_comidas = %s'
+                cursor.execute(query,(usuario_actual,RUT,))
+                db.commit()
+
+
+
+                #animacion 2
+                animation_container = ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Text("Comida Ingresada", size=20, weight="bold", color=ft.colors.GREEN_500),
+                            # Texto de comida ingresada
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER
+                    ),
+                    alignment=ft.alignment.center,
+                    expand=True,
+                    bgcolor=ft.colors.SCRIM,
+                    border_radius=10,
+
+                    visible=False  # Inicialmente oculto
+                )
+
+                # Agregar el contenedor a la página
+                page.clean()
+                page.add(animation_container)
+
+                # Mostrar el contenedor y animar el texto directamente
+                animation_container.visible = True  # Hacer visible el contenedor
+                page.update()  # Actualizar la página
+
+                # Animar el texto (fade in)
+                for i in range(0, 101, 5):  # De 0 a 100 en pasos de 5
+                    animation_container.opacity = i / 100  # Cambiar la opacidad
+                    page.update()
+                    time.sleep(0.05)  # Esperar un poco para crear el efecto
+
+                # Esperar un momento con el texto visible
+                time.sleep(2)
+
+                # Animar el texto (fade out)
+                for i in range(100, -1, -5):  # De 100 a 0 en pasos de -5
+                    animation_container.opacity = i / 100  # Cambiar la opacidad
+                    page.update()
+                    time.sleep(0.05)  # Esperar un poco para crear el efecto
+
+                animation_container.visible = False  # Ocultar el contenedor al final
+                page.update()  # Actualizar la página
+
+                print('comida ingresada correctamente')
+                agregar_comidad()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        '''def agregar():
             n_c = ingresar_nombre_cliente.value.lower()
             if n_c in clientes:
                 if n_c not in comidas_dic:
@@ -908,12 +1135,12 @@ def main(page: ft.Page):
             mensaje_final_comida = ft.Text('Se agrego la pauta alimenticia')
             print(comidas_dic)
             page.add(mensaje_final_comida,boton_volver)
-            page.update()
+            page.update()'''
 
 
         boton_volver = ft.ElevatedButton('Volver', on_click=lambda e: agregar_comidad())
-        boton_search = ft.ElevatedButton('Buscar', on_click=lambda _: agregar())
-        page.add(ingresar_nombre_cliente, boton_search)
+
+        '''page.add(ingresar_nombre_cliente, boton_search)'''
 
     def preguntas_respuestas_entrenador():
         borrar = ''
