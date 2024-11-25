@@ -48,11 +48,11 @@ def main(page: ft.Page):
 
     # conexion base de datos local
     db = mysql.connector.connect(
-        user='root',
-        password='2603Mario@',
-        host='localhost',
-        port='3306',
-        database='base_produccion'
+        user='',
+        password='',
+        host='',
+        port='',
+        database=''
 
     )
     print(db)
